@@ -98,7 +98,7 @@ static inline ENTRY* NEXT(const HASH* h, ENTRY* e) {
  * Get next free insertion position in the hash table
  *
  * @param h Hash table
- * @param v Hash index
+ * @param i Hash index
  * @return Pointer to free entry
  */
 static inline ENTRY* INSERTPOS(HASH* h, HashIndex i) {
@@ -132,7 +132,7 @@ static void GROW(HASH* h) {
  * Insert into hash table
  *
  * @param h Hash table
- * @param v Hash index
+ * @param i Hash index
  * @return Pointer to inserted entry
  */
 static inline ENTRY* INSERT(HASH* h, HashIndex i) {
@@ -147,8 +147,8 @@ static inline ENTRY* INSERT(HASH* h, HashIndex i) {
  * Find position of entry or insertion position
  *
  * @param h Hash table
- * @parem k Key
- * @param v Hash index of key
+ * @param k Key
+ * @param i Hash index of key
  * @param r Returns pointer to entry or next insertion position
  * @return true if key was found
  */
@@ -179,7 +179,7 @@ static inline bool FINDPOS(const HASH* h, KEYTYPE k, HashIndex i, ENTRY** r) {
  * Find entry by key
  *
  * @param h Hash table
- * @parem k Key
+ * @param k Key
  * @return Entry or 0 if not found
  */
 static inline ENTRY* FIND(const HASH* h, KEYTYPE k) {
