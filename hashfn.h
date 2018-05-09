@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef struct { uint32_t i; } HashIndex;
+typedef struct { uint32_t _i; } HashIndex;
 
 static inline uint32_t hashMurmur32(uint32_t x) {
     x ^= x >> 16;
