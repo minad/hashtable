@@ -1,5 +1,9 @@
-#include <stdio.h>
+= Hashtable with open addressing
 
+== Configure the hash table
+
+[source,c]
+----
 typedef struct {
     const char* k;
     int         v;
@@ -13,15 +17,22 @@ typedef struct {
 #define KEYEQ(a, b) !strcmp(a, b)
 #define HASHFN      hashString
 #include "hash.h"
+----
 
+== Usage
+
+[source,c]
+----
 int main(void) {
     Hash hash = HASH_INIT;
 
     Entry* e;
 
-    hashCreate(&hash, "a", &e);
-    e->k = "a";
-    e->v = 1;
+    if (hashCreate(&hash, "a", &e)) {
+        printf("ENTRY CREATED\n");
+        e->k = "a";
+        e->v = 1;
+    }
 
     hashCreate(&hash, "b", &e);
     e->k = "b";
@@ -50,3 +61,8 @@ int main(void) {
     HASH_FOREACH(hash, f, &hash)
         printf("%s %d\n", f->k, f->v);
 }
+----
+
+== License
+
+MIT (c) 2018 Daniel Mendler

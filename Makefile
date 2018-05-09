@@ -1,2 +1,2 @@
-main: main.c hash.h hashfn.h
-	gcc -Wall -o main main.c
+test: test.c hash.h hashfn.h
+	gcc -Wall -o test test.c
