@@ -1,5 +1,14 @@
 = Hashtable with open addressing
 
+This library provides a simple hashtable written in C. The hashtable is stored
+as a single heap allocated array. This storage scheme is good for caching, since
+everything is densely packed and pointer chasing is avoided in contrast to hashtables which use linked lists.
+The array will grow automatically, when the filling reaches a certain threshold.
+
+By using macros, the library is specialized for each entry type. For example
+it is possible to generate a hashset without overhead, by using entries consisting only of a key.
+Arbitrary key types are supported and various hash functions are provided in link:hashfn.h[].
+
 == Configure the hash table
 
 [source,c]
