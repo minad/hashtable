@@ -15,11 +15,11 @@ At first we create the hashtable functions and datastructure for the special ent
 For optimal performance all hash functions are specialized for this entry type.
 
 [NOTE]
-----
+====
 Configuring the hash table is the hardest part. You might get many compiler
 errors due to incorrect macro values. However after doing that you will get
 a nice specialized and "type-safe" hashtable API.
-----
+====
 
 [source,c]
 ----
