@@ -3,11 +3,11 @@
 typedef struct {
     const char* k;
     int         v;
-} Entry;
+} MyEntry;
 
-#define HASH        Hash
-#define ENTRY       Entry
-#define PREFIX      hash
+#define HASH        MyHash
+#define ENTRY       MyEntry
+#define PREFIX      myhash
 #define KEY(e)      e->k
 #define EXISTS(e)   e->k
 #define KEYEQ(a, b) !strcmp(a, b)
@@ -15,40 +15,40 @@ typedef struct {
 #include "hash.h"
 
 int main(void) {
-    Hash hash = HASH_INIT;
+    MyHash h = HASH_INIT;
 
-    Entry* e;
+    MyEntry* e;
 
-    if (hashCreate(&hash, "a", &e)) {
+    if (myhashCreate(&h, "a", &e)) {
         printf("ENTRY CREATED\n");
         e->k = "a";
         e->v = 1;
     }
 
-    hashCreate(&hash, "b", &e);
+    myhashCreate(&h, "b", &e);
     e->k = "b";
     e->v = 2;
 
-    hashCreate(&hash, "c", &e);
+    myhashCreate(&h, "c", &e);
     e->k = "c";
     e->v = 3;
 
-    hashCreate(&hash, "c", &e);
+    myhashCreate(&h, "c", &e);
     e->k = "c";
     e->v = 4;
 
-    e = hashFind(&hash, "a");
+    e = myhashFind(&h, "a");
     if (e)
         printf("FOUND a %d\n", e->v);
     else
         printf("NOT FOUND a\n");
 
-    e = hashFind(&hash, "d");
+    e = myhashFind(&h, "d");
     if (e)
         printf("FOUND d %d\n", e->v);
     else
         printf("NOT FOUND d\n");
 
-    HASH_FOREACH(hash, f, &hash)
+    HASH_FOREACH(myhash, f, &h)
         printf("%s %d\n", f->k, f->v);
 }
