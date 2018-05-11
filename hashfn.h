@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -48,9 +49,9 @@ static inline uint32_t hashWang64(uint64_t x) {
 }
 
 /// Fowler-Noll-Vo
-static inline uint32_t hashFNV(const uint8_t* p, size_t n) {
+static inline uint32_t hashFNV(const uint8_t* p, size_t n, bool zeroTerminated) {
     uint32_t h = 16777619U;
-    for (size_t i = 0; i < n; ++i)
+    for (size_t i = 0; zeroTerminated ? p[i] : i < n; ++i)
         h = (h * 2166136261U) ^ p[i];
     return h;
 }
@@ -64,7 +65,7 @@ static inline uint32_t hashUInt64(uint64_t x) {
 }
 
 static inline uint32_t hashBytes(const uint8_t* p, size_t n) {
-    return hashFNV(p, n);
+    return hashFNV(p, n, false);
 }
 
 static inline uint32_t hashPtr(const void* p) {
@@ -72,5 +73,5 @@ static inline uint32_t hashPtr(const void* p) {
 }
 
 static inline uint32_t hashString(const char* p) {
-    return hashBytes((const uint8_t*)p, strlen(p));
+    return hashFNV((const uint8_t*)p, 0, true);
 }

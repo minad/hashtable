@@ -1,7 +1,6 @@
 #include "hashfn.h"
 #include <assert.h>
-#include <stdbool.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define LIKELY(x)     __builtin_expect((x), 1)
 #define UNLIKELY(x)   __builtin_expect((x), 0)
