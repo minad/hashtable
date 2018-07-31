@@ -4,74 +4,26 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef struct { uint32_t _i; } HashIndex;
+typedef struct { size_t _i; } HashIndex;
 
-static inline uint32_t hashMurmur32(uint32_t x) {
-    x ^= x >> 16;
-    x *= 0x85ebca6b;
-    x ^= x >> 13;
-    x *= 0xc2b2ae35;
-    x ^= x >> 16;
-    return x;
+HashIndex hashBytes(const uint8_t*, size_t);
+
+/// 32 bit avalanche mixer
+static inline HashIndex hash32(uint32_t x) {
+    uint32_t y = 0xf5b2d64f, z = __builtin_bswap32(x * y);
+    return (HashIndex) { (size_t)(__builtin_bswap32(z * z) * y) };
 }
 
-static inline uint32_t hashMurmur64(uint64_t x) {
-    x ^= x >> 33;
-    x *= 0xff51afd7ed558ccd;
-    x ^= x >> 33;
-    x *= 0xc4ceb9fe1a85ec53;
-    x ^= x >> 33;
-    return (uint32_t)x;
+/// 64 bit avalanche mixer
+static inline HashIndex hash64(uint64_t x) {
+    uint64_t y = 0xf111865d95ca7731, z = __builtin_bswap64(x * y);
+    return (HashIndex) { (size_t)(__builtin_bswap64(z * z) * y) };
 }
 
-/// Thomas Wang
-static inline uint32_t hashWang32(uint32_t x) {
-    x += ~(x<<15);
-    x ^=  (x>>10);
-    x +=  (x<<3);
-    x ^=  (x>>6);
-    x += ~(x<<11);
-    x ^=  (x>>16);
-    return x;
+static inline HashIndex hashWord(size_t x) {
+    return sizeof (size_t) == 4 ? hash32(x) : hash64(x);
 }
 
-/// Thomas Wang
-static inline uint32_t hashWang64(uint64_t x) {
-    x += ~(x<<32);
-    x ^=  (x>>22);
-    x += ~(x<<13);
-    x ^=  (x>>8);
-    x +=  (x<<3);
-    x ^=  (x>>15);
-    x += ~(x<<27);
-    x ^=  (x>>31);
-    return (uint32_t)x;
-}
-
-/// Fowler-Noll-Vo
-static inline uint32_t hashFNV(const uint8_t* p, size_t n, bool zeroTerminated) {
-    uint32_t h = 16777619U;
-    for (size_t i = 0; zeroTerminated ? p[i] : i < n; ++i)
-        h = (h * 2166136261U) ^ p[i];
-    return h;
-}
-
-static inline uint32_t hashUInt32(uint32_t x) {
-    return hashMurmur32(x);
-}
-
-static inline uint32_t hashUInt64(uint64_t x) {
-    return hashMurmur64(x);
-}
-
-static inline uint32_t hashBytes(const uint8_t* p, size_t n) {
-    return hashFNV(p, n, false);
-}
-
-static inline uint32_t hashPtr(const void* p) {
-    return hashUInt64((uint64_t)p);
-}
-
-static inline uint32_t hashString(const char* p) {
-    return hashFNV((const uint8_t*)p, 0, true);
+static inline HashIndex hashPtr(const void* p) {
+    return hashWord((uintptr_t)p);
 }

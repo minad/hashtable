@@ -14,11 +14,11 @@
 #define INDEX         CAT(PREFIX, Index)
 #define INSERT        CAT(PREFIX, Insert)
 #define INSERTPOS     CAT(PREFIX, InsertPos)
-#define KEYTYPE       const typeof (KEY(((ENTRY*)0)))
+#define KEYTYPE       CAT(PREFIX, KeyType)
 #define NEXT          CAT(PREFIX, Next)
 
-#ifndef CALLOC
-#  define CALLOC(h, x) calloc((x), 1)
+#ifndef ZALLOC
+#  define ZALLOC(h, x) calloc((x), 1)
 #  define FREE(h, x)   free(x)
 #endif
 #ifndef MAXFILL
@@ -34,16 +34,16 @@
 #  define KEYEQ(a, b) (a == b)
 #endif
 #ifndef HASHFN
-#  define HASHFN(k) hashPtr(k)
+#  define HASHFN(k) _chiliHashPtr(k)
 #endif
 
-#define INVARIANT                                 \
-    ({                                            \
+#define INVARIANT                                       \
+    ({                                                  \
         assert(h != 0);                           \
-        assert((!h->entry) == (!h->size));        \
-        assert(h->count <= h->size);              \
+        assert((!h->entry) == (!h->capacity));    \
+        assert(h->used <= h->capacity);           \
     })
-#define FULL      (h->count >= MAXFILL * h->size / 100)
+#define FULL      (h->used >= MAXFILL * h->capacity / 100)
 #define HASH_INIT { 0, 0, 0 }
 #define HASH_FOREACH(p, e, h) for (typeof(CAT(p, Next)((h), (h)->entry)) e = CAT(p, Next)((h), (h)->entry); e; e = CAT(p, Next)((h), e + 1))
 #define HASH_AUTO(h, n) h n __attribute__ ((cleanup(CAT(h, _auto_destroy)))) = HASH_INIT
@@ -51,15 +51,17 @@
 #ifndef NOHASH
 typedef struct {
     ENTRY* entry;
-    size_t count, size;
+    size_t used, capacity;
 } HASH;
 #endif
+
+typedef const typeof (KEY(((ENTRY*)0))) KEYTYPE;
 
 /**
  * Compute hash index
  */
 static inline HashIndex INDEX(KEYTYPE k) {
-    return (HashIndex){ HASHFN(k) };
+    return HASHFN(k);
 }
 
 /**
@@ -69,7 +71,7 @@ static inline void DESTROY(HASH* h) {
     INVARIANT;
     FREE(h, h->entry);
     h->entry = 0;
-    h->size = h->count = 0;
+    h->capacity = h->used = 0;
 }
 
 static inline void CAT(HASH, _auto_destroy)(HASH* h) {
@@ -85,7 +87,7 @@ static inline void CAT(HASH, _auto_destroy)(HASH* h) {
  */
 static inline ENTRY* NEXT(const HASH* h, ENTRY* e) {
     INVARIANT;
-    for (; e < h->entry + h->size; ++e) {
+    for (; e < h->entry + h->capacity; ++e) {
         bool x = EXISTS(e);
         if (x)
             return e;
@@ -104,7 +106,7 @@ static inline ENTRY* INSERTPOS(HASH* h, HashIndex i) {
     INVARIANT;
     assert(h && h->entry);
     for (size_t n = 0; ; ++n) {
-        size_t a = (i._i + n) & (h->size - 1);
+        size_t a = (i._i + n) & (h->capacity - 1);
         ENTRY* e = h->entry + a;
         bool x = EXISTS(e);
         if (!x)
@@ -118,9 +120,9 @@ static inline ENTRY* INSERTPOS(HASH* h, HashIndex i) {
 static void GROW(HASH* h) {
     INVARIANT;
     HASH l = *h;
-    l.size = h->size ? 2 * h->size : (1UL << INITSHIFT);
-    size_t n = sizeof (ENTRY) * l.size;
-    l.entry = (ENTRY*)CALLOC(h, n);
+    l.capacity = h->capacity ? 2 * h->capacity : (1UL << INITSHIFT);
+    size_t n = sizeof (ENTRY) * l.capacity;
+    l.entry = (ENTRY*)ZALLOC(h, n);
     HASH_FOREACH(PREFIX, e, h)
         memcpy(INSERTPOS(&l, INDEX(KEY(e))), e, sizeof (ENTRY));
     DESTROY(h);
@@ -138,7 +140,7 @@ static inline ENTRY* INSERT(HASH* h, HashIndex i) {
     INVARIANT;
     if (UNLIKELY(FULL))
         GROW(h);
-    ++h->count;
+    ++h->used;
     return INSERTPOS(h, i);
 }
 
@@ -153,12 +155,9 @@ static inline ENTRY* INSERT(HASH* h, HashIndex i) {
  */
 static inline bool FINDPOS(const HASH* h, KEYTYPE k, HashIndex i, ENTRY** r) {
     INVARIANT;
-    if (UNLIKELY(!h->entry)) {
-        *r = 0;
-        return false;
-    }
+    assert(h && h->entry);
     for (size_t n = 0; ; ++n) {
-        size_t a = (i._i + n) & (h->size - 1);
+        size_t a = (i._i + n) & (h->capacity - 1);
         ENTRY* e = h->entry + a;
         bool x = EXISTS(e);
         if (!x) {
@@ -183,7 +182,7 @@ static inline bool FINDPOS(const HASH* h, KEYTYPE k, HashIndex i, ENTRY** r) {
  */
 static inline ENTRY* FIND(const HASH* h, KEYTYPE k) {
     ENTRY* e;
-    return FINDPOS(h, k, INDEX(k), &e) ? e : 0;
+    return h->entry && FINDPOS(h, k, INDEX(k), &e) ? e : 0;
 }
 
 /**
@@ -197,20 +196,23 @@ static inline ENTRY* FIND(const HASH* h, KEYTYPE k) {
 static inline bool CREATE(HASH* h, KEYTYPE k, ENTRY** r) {
     INVARIANT;
     HashIndex i = INDEX(k);
-    ENTRY* e;
-    if (FINDPOS(h, k, i, &e)) {
-        *r = e;
-        return false;
+    if (LIKELY(h->entry != 0)) {
+        ENTRY* e;
+        if (FINDPOS(h, k, i, &e)) {
+            *r = e;
+            return false;
+        }
+        if (LIKELY(!FULL)) {
+            ++h->used;
+            *r = e;
+            return true;
+        }
     }
-    if (LIKELY(e && !FULL))
-        ++h->count;
-    else
-        e = INSERT(h, i);
-    *r = e;
+    *r = INSERT(h, i);
     return true;
 }
 
-#undef CALLOC
+#undef ZALLOC
 #undef CREATE
 #undef DESTROY
 #undef ENTRY

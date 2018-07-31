@@ -11,7 +11,7 @@ typedef struct {
 #define KEY(e)      e->k
 #define EXISTS(e)   e->k
 #define KEYEQ(a, b) !strcmp(a, b)
-#define HASHFN      hashString
+#define HASHFN(s)   hashBytes((const uint8_t*)(s), strlen(s))
 #include "hash.h"
 
 int main(void) {
