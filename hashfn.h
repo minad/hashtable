@@ -20,10 +20,6 @@ static inline HashIndex hash64(uint64_t x) {
     return (HashIndex) { (size_t)(__builtin_bswap64(z * z) * y) };
 }
 
-static inline HashIndex hashWord(size_t x) {
-    return sizeof (size_t) == 4 ? hash32(x) : hash64(x);
-}
-
 static inline HashIndex hashPtr(const void* p) {
-    return hashWord((uintptr_t)p);
+    return sizeof (uintptr_t) == 4 ? hash32((uintptr_t)p) : hash64((uintptr_t)p);
 }
