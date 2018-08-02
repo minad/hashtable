@@ -8,16 +8,24 @@ typedef struct { size_t _i; } HashIndex;
 
 HashIndex hashBytes(const uint8_t*, size_t);
 
-/// 32 bit avalanche mixer
+/// Murmur avalanche
 static inline HashIndex hash32(uint32_t x) {
-    uint32_t y = 0xf5b2d64f, z = __builtin_bswap32(x * y);
-    return (HashIndex) { (size_t)(__builtin_bswap32(z * z) * y) };
+    x ^= x >> 16;
+    x *= 0x85ebca6b;
+    x ^= x >> 13;
+    x *= 0xc2b2ae35;
+    x ^= x >> 16;
+    return (HashIndex){ x };
 }
 
-/// 64 bit avalanche mixer
+/// Murmur avalanche
 static inline HashIndex hash64(uint64_t x) {
-    uint64_t y = 0xf111865d95ca7731, z = __builtin_bswap64(x * y);
-    return (HashIndex) { (size_t)(__builtin_bswap64(z * z) * y) };
+    x ^= x >> 33;
+    x *= 0xff51afd7ed558ccd;
+    x ^= x >> 33;
+    x *= 0xc4ceb9fe1a85ec53;
+    x ^= x >> 33;
+    return (HashIndex){ x };
 }
 
 static inline HashIndex hashPtr(const void* p) {

@@ -14,13 +14,6 @@ Arbitrary key types are supported and various hash functions are provided in lin
 At first we create the hashtable functions and datastructure for the special entry type `MyEntry`.
 For optimal performance all hash functions are specialized for this entry type.
 
-[NOTE]
-====
-Configuring the hash table is the hardest part. You might get many compiler
-errors due to incorrect macro values. However after doing that you will get
-a nice specialized and "type-safe" hashtable API.
-====
-
 [source,c]
 ----
 typedef struct {
@@ -35,7 +28,7 @@ typedef struct {
 #define EXISTS(e)   e->k
 #define KEYEQ(a, b) !strcmp(a, b)
 #define HASHFN      hashString
-#include "hash.h"
+#include "hashtable.h"
 ----
 
 == Usage

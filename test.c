@@ -12,7 +12,7 @@ typedef struct {
 #define EXISTS(e)   e->k
 #define KEYEQ(a, b) !strcmp(a, b)
 #define HASHFN(s)   hashBytes((const uint8_t*)(s), strlen(s))
-#include "hash.h"
+#include "hashtable.h"
 
 int main(void) {
     MyHash h = HASH_INIT;
